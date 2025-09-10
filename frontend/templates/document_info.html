@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Document Info — Siemens App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --card: #111826;
+        --text: #e7eef7;
+        --muted: #9bb1c9;
+        --accent: #3b82f6;
+        --border: #1f2a3a;
+        --ring: #2563eb33;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .card {
+        background: var(--card);
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        width: 100%;
+        max-width: 700px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 22px;
+        text-align: center;
+        color: var(--accent);
+      }
+      .error {
+        background: #3a1212;
+        color: #ffb4b4;
+        padding: 10px;
+        border: 1px solid #5a1c1c;
+        border-radius: 10px;
+        font-size: 14px;
+        margin: 8px 0 14px;
+        text-align: center;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 14px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .meta .row { margin: 6px 0; }
+      .actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 10px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .versions {
+        margin-top: 10px;
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+      }
+      .version-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0f172a;
+        margin-bottom: 10px;
+      }
+      .version-title {
+        font-weight: 600;
+      }
+      .version-actions a {
+        margin-left: 10px;
+        font-size: 13px;
+        text-decoration: none;
+        color: var(--accent);
+      }
+      .footer {
+        margin-top: 12px;
+        text-align: center;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .footer a { color: var(--accent); text-decoration: none; }
+      .footer a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Document Info</h1>
+
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      {% if info %}
+        <div class="meta">
+          <div class="row">Title: <strong>{{ info.document_title }}</strong></div>
+          {% if info.uploader_name %}
+          <div class="row">Document creator: <strong>{{ info.uploader_name }}</strong></div>
+          {% endif %}
+          {% if info.tags %}
+          <div class="row">Tags:
+            {% for tag in info.tags %}
+              <span style="background:#0f172a;border:1px solid var(--border);padding:2px 8px;border-radius:8px;margin-right:6px;margin-top:4px;color:var(--text);display:inline-block;">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Current (latest) version actions -->
+        {% set current = info.versions[0] if info.versions else None %}
+        {% if current %}
+        <div class="actions">
+          <a class="btn" href="{{ url_for('helpers.view_document') }}?title={{ info.document_title }}">View latest</a>
+          <a class="btn" href="{{ url_for('helpers.download_document') }}?title={{ info.document_title }}">Download latest</a>
+        </div>
+        {% endif %}
+
+        <div class="versions">
+          <h3>All Versions</h3>
+          {% for v in info.versions %}
+            <div class="version-item">
+              <div>
+                <div class="version-title">Version {{ v.version_number }}</div>
+                <div class="meta">Creator: {{ v.uploader_name }} • {{ v.uploaded_at }}</div>
+              </div>
+              <div class="version-actions">
+                <a href="{{ url_for('helpers.view_document') }}?title={{ info.document_title }}&version_number={{ v.version_number }}">View</a>
+                <a href="{{ url_for('helpers.download_document') }}?title={{ info.document_title }}&version_number={{ v.version_number }}">Download</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="footer">
+        <p><a href="{{ url_for('main.index') }}">Back to Search</a></p>
+      </div>
+    </div>
+  </body>
+</html>

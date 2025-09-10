@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>DB Snapshot — test_all</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --card: #111826;
+        --text: #e7eef7;
+        --muted: #9bb1c9;
+        --accent: #3b82f6;
+        --border: #1f2a3a;
+        --ring: #2563eb33;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(6px);
+        background: linear-gradient(
+          180deg,
+          rgba(11, 15, 20, 0.8),
+          rgba(11, 15, 20, 0.3)
+        );
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 20px;
+      }
+      header p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      #refreshBtn {
+        margin-left: auto;
+        padding: 8px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--text);
+        cursor: pointer;
+      }
+      #refreshBtn:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px var(--ring);
+      }
+
+      main {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 16px;
+        color: var(--accent);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: 10px;
+      }
+      thead {
+        background: rgba(59, 130, 246, 0.1);
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      tbody tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .muted {
+        color: var(--muted);
+        margin: 8px 0 0;
+      }
+      .error {
+        color: #ffb4b4;
+        background: #3a1212;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #5a1c1c;
+      }
+      footer {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h1>Database Snapshot</h1>
+      <p>Fetched from <code>/test_all</code></p>
+      <button id="refreshBtn">Refresh</button>
+    </header>
+
+    <main id="content">
+      <!-- Tables get injected here -->
+    </main>
+
+    <footer>
+      <small>Simple viewer for Siemens assessment</small>
+    </footer>
+
+<script>
+  async function fetchAll() {
+    const res = await fetch('{{ url_for("main.test_all") }}');
+    if (!res.ok) throw new Error("Failed to fetch /test_all");
+    return res.json();
+  }
+
+  // define desired column orders
+  const columns = {
+    employees: ["id", "name", "email", "role", "department"],
+    departments: ["id", "name"],
+    roles: ["id", "name"],
+    documents: ["id", "title", "uploader_id", "created_at", "current_version_id"],
+    document_versions: [
+      "id",
+      "document_id",
+      "version_number",
+      "filename",
+      "filepath",
+      "uploaded_at",
+      "uploader_id",
+    ],
+    tags: ["id", "name"],
+    document_tags: ["document_id", "tag_id"],
+    document_permissions: ["document_id", "department_id"],
+  };
+
+  function makeTable(title, rows) {
+    const section = document.createElement("section");
+    section.className = "card";
+
+    const h2 = document.createElement("h2");
+    h2.textContent = title;
+    section.appendChild(h2);
+
+    if (!rows || rows.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "No rows";
+      section.appendChild(empty);
+      return section;
+    }
+
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const tbody = document.createElement("tbody");
+
+    // use predefined column order or fall back to keys of first row
+    const cols = columns[title] || Object.keys(rows[0]);
+
+    const trHead = document.createElement("tr");
+    cols.forEach((c) => {
+      const th = document.createElement("th");
+      th.textContent = c;
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+
+    rows.forEach((r) => {
+      const tr = document.createElement("tr");
+      cols.forEach((c) => {
+        const td = document.createElement("td");
+        let v = r[c];
+        // nice formatting for dates
+        if (typeof v === "string" && v.match(/GMT|T\d{2}:/)) {
+          const d = new Date(v);
+          if (!isNaN(d.getTime())) v = d.toLocaleString();
+        }
+        td.textContent = v === null || v === undefined ? "" : v;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    section.appendChild(table);
+    return section;
+  }
+
+  async function render() {
+    const container = document.getElementById("content");
+    container.innerHTML = "";
+    try {
+      const data = await fetchAll();
+      // consistent order
+      const order = [
+        "employees",
+        "departments",
+        "roles",
+        "documents",
+        "document_versions",
+        "tags",
+        "document_tags",
+        "document_permissions",
+      ];
+      order.forEach((key) => {
+        if (key in data) container.appendChild(makeTable(key, data[key]));
+      });
+    } catch (e) {
+      const err = document.createElement("pre");
+      err.className = "error";
+      err.textContent = e.message;
+      container.appendChild(err);
+    }
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", render);
+  render();
+</script>
+
+  </body>
+</html>

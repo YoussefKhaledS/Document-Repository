@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Search Documents — Siemens App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --card: #111826;
+        --text: #e7eef7;
+        --muted: #9bb1c9;
+        --accent: #3b82f6;
+        --border: #1f2a3a;
+        --ring: #2563eb33;
+        --success: #10b981;
+        --error: #ef4444;
+      }
+      
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      
+      .header h1 {
+        color: var(--accent);
+        font-size: 28px;
+        margin: 0 0 10px;
+      }
+      
+      .header p {
+        color: var(--muted);
+        margin: 0;
+      }
+      
+      .search-card {
+        background: var(--card);
+        padding: 30px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        margin-bottom: 30px;
+      }
+      
+      .search-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .form-group.full-width {
+        grid-column: 1 / -1;
+      }
+      
+      label {
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      
+      input, select, textarea {
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #0f172a;
+        color: var(--text);
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      
+      select[multiple] {
+        min-height: 100px;
+        padding: 8px;
+      }
+      
+      select[multiple] option {
+        padding: 6px 8px;
+        background: #0f172a;
+        color: var(--text);
+      }
+      
+      select[multiple] option:checked {
+        background: var(--accent);
+        color: white;
+      }
+      
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--ring);
+      }
+      
+      .search-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+      
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+      
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+      
+      .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+      
+      .btn-secondary {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+      
+      .btn-secondary:hover {
+        background: var(--border);
+        color: var(--text);
+      }
+      
+      .results-section {
+        background: var(--card);
+        padding: 30px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      }
+      
+      .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border);
+      }
+      
+      .results-count {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      
+      .results-list {
+        display: grid;
+        gap: 12px;
+      }
+      
+      .result-item {
+        background: #0f172a;
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        transition: all 0.2s;
+      }
+      
+      .result-item:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+      
+      .result-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 0 0 8px;
+      }
+      
+      .result-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      
+      .no-results {
+        text-align: center;
+        padding: 40px;
+        color: var(--muted);
+      }
+      
+      .no-results-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+      }
+      
+      .error {
+        background: #3a1212;
+        color: #ffb4b4;
+        padding: 12px;
+        border: 1px solid #5a1c1c;
+        border-radius: 10px;
+        font-size: 14px;
+        margin-bottom: 20px;
+      }
+      
+      .success {
+        background: #0f2e1a;
+        color: #86efac;
+        padding: 12px;
+        border: 1px solid #166534;
+        border-radius: 10px;
+        font-size: 14px;
+        margin-bottom: 20px;
+      }
+      
+      .footer {
+        margin-top: 30px;
+        text-align: center;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      
+      .footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      
+      
+      @media (max-width: 768px) {
+        .search-form {
+          grid-template-columns: 1fr;
+        }
+        
+        .search-buttons {
+          flex-direction: column;
+        }
+        
+        .results-header {
+          flex-direction: column;
+          gap: 10px;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Search Documents</h1>
+        <p>Find documents by title, tags, or uploader</p>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Search Form -->
+      <div class="search-card">
+        <form method="POST" id="searchForm">
+          <div class="search-form">
+            <div class="form-group full-width">
+              <label for="title">Document Title</label>
+              <input 
+                type="text" 
+                id="title" 
+                name="title" 
+                placeholder="Enter document title (partial matches supported)"
+                value="{{ request.form.get('title', '') if request.method == 'POST' else '' }}"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="tags">Tags</label>
+              <select 
+                id="tags" 
+                name="tags" 
+                multiple
+                size="4"
+              >
+                {% if accessible and accessible.tags %}
+                  {% for tag in accessible.tags %}
+                    <option value="{{ tag }}" 
+                      {% if request.method == 'POST' and tag in request.form.getlist('tags') %}
+                        selected
+                      {% endif %}
+                    >{{ tag }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+              <small style="color: var(--muted); font-size: 12px; margin-top: 4px;">
+                Hold Ctrl (Cmd on Mac) to select multiple tags
+              </small>
+            </div>
+            
+            <div class="form-group">
+              <label for="uploader_names">Uploaders</label>
+              <select 
+                id="uploader_names" 
+                name="uploader_names" 
+                multiple
+                size="4"
+              >
+                {% if accessible and accessible.uploaders %}
+                  {% for uploader in accessible.uploaders %}
+                    <option value="{{ uploader }}"
+                      {% if request.method == 'POST' and uploader in request.form.getlist('uploader_names') %}
+                        selected
+                      {% endif %}
+                    >{{ uploader }}</option>
+                  {% endfor %}
+                {% endif %}
+              </select>
+              <small style="color: var(--muted); font-size: 12px; margin-top: 4px;">
+                Hold Ctrl (Cmd on Mac) to select multiple uploaders
+              </small>
+            </div>
+          </div>
+          
+          <div class="search-buttons">
+            <button type="submit" class="btn-primary">Search Documents</button>
+            <button type="button" class="btn-secondary" onclick="clearForm()">Clear Form</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Search Results -->
+      {% if results is not none %}
+        <div class="results-section">
+          <div class="results-header">
+            <h2>Search Results</h2>
+            <div class="results-count">
+              {% if results %}
+                {{ results|length }} document{{ 's' if results|length != 1 else '' }} found
+              {% else %}
+                No documents found
+              {% endif %}
+            </div>
+          </div>
+          
+          {% if results %}
+            <div class="results-list">
+              {% for document in results %}
+                <div class="result-item" ondblclick="goToInfo('{{ document }}')">
+                  <div class="result-title">{{ document }}</div>
+                  <div class="result-meta">
+                    <span>📄 Document</span>
+                    <span>🔍 Matched your search criteria</span>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="no-results">
+              <div class="no-results-icon">🔍</div>
+              <h3>No documents found</h3>
+              <p>Try adjusting your search criteria or check the spelling of your search terms.</p>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="footer">
+        <p>
+          <a href="{{ url_for('main.upload_document') }}">Upload Document</a>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      function goToInfo(title) {
+        const params = new URLSearchParams({ title });
+        window.location.href = `{{ url_for('main.document_info') }}?${params.toString()}`;
+      }
+      // Clear form
+      function clearForm() {
+        document.getElementById('searchForm').reset();
+      }
+      
+      // Add visual feedback for selected options
+      document.addEventListener('DOMContentLoaded', function() {
+        const tagsSelect = document.getElementById('tags');
+        const uploadersSelect = document.getElementById('uploader_names');
+        
+        // Add change listeners to update visual feedback
+        if (tagsSelect) {
+          tagsSelect.addEventListener('change', function() {
+            updateSelectedCount('tags', 'Selected tags');
+          });
+        }
+        
+        if (uploadersSelect) {
+          uploadersSelect.addEventListener('change', function() {
+            updateSelectedCount('uploader_names', 'Selected uploaders');
+          });
+        }
+        
+        // Initialize counts on page load
+        updateSelectedCount('tags', 'Selected tags');
+        updateSelectedCount('uploader_names', 'Selected uploaders');
+      });
+      
+      function updateSelectedCount(selectId, labelText) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        const selectedCount = select.selectedOptions.length;
+        const label = select.previousElementSibling;
+        
+        // Remove existing count if any
+        const existingCount = label.querySelector('.selected-count');
+        if (existingCount) {
+          existingCount.remove();
+        }
+        
+        // Add count if there are selections
+        if (selectedCount > 0) {
+          const countSpan = document.createElement('span');
+          countSpan.className = 'selected-count';
+          countSpan.style.color = 'var(--accent)';
+          countSpan.style.fontSize = '12px';
+          countSpan.style.marginLeft = '8px';
+          countSpan.textContent = `(${selectedCount} selected)`;
+          label.appendChild(countSpan);
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+backend/files
+__pycache__
+backend/.env
+siemens_flask
+migrations
+
+

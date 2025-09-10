@@ -1,0 +1,10 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-WTF
+bcrypt
+email-validator
+Flask-Limiter
+python-dotenv
+pandas
+email-validator
